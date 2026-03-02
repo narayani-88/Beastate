@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+
+  # PostgreSQL Database Container
+  postgres:
+    image: postgres:15          # Download PostgreSQL version 15
+    container_name: userdb      # Name of the container
+    environment:
+      POSTGRES_DB: userdb       # Database name
+      POSTGRES_USER: postgres   # Username
+      POSTGRES_PASSWORD: postgres # Password
+    ports:
+      - "5432:5432"             # laptop port : container port
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Save data permanently
+
+volumes:
+  postgres_data:

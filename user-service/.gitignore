@@ -31,3 +31,52 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# =============================================
+# COMPILED OUTPUT
+# =============================================
+target/
+*.class
+*.jar
+*.war
+
+# =============================================
+# INTELLIJ IDEA FILES
+# (no need to push editor settings to GitHub)
+# =============================================
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# =============================================
+# MAVEN
+# =============================================
+.mvn/wrapper/maven-wrapper.jar
+
+# =============================================
+# ENVIRONMENT & SECRETS
+# =============================================
+# VERY IMPORTANT: Never push these to GitHub!
+# Your DB passwords, JWT secret, API keys live here
+application-local.properties
+application-prod.properties
+.env
+*.env
+
+# =============================================
+# LOGS
+# =============================================
+*.log
+logs/
+
+# =============================================
+# OS FILES
+# =============================================
+.DS_Store        # Mac
+Thumbs.db        # Windows
+
+# =============================================
+# DOCKER
+# =============================================
+docker-compose.override.yml
