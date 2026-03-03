@@ -41,6 +41,6 @@ public class User {
     }
 
     public enum Role {
-        BUYER, INVESTOR, ADMIN
+        BUYER, SELLER, GUEST
     }
 }
