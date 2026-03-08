@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database Container
+  userdb:
+    image: postgres:15
+    container_name: userdb
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - beastate_network
+
+  # 2. Spring Boot Backend Container
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://userdb:5432/userdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # Ensures backend waits for DB to be up (though driver handles reconnections)
+    depends_on:
+      - userdb
+    networks:
+      - beastate_network
+
+  # 3. React + Nginx Frontend Container
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "80:80" # Exposed on standard HTTP port 80
+    depends_on:
+      - user-service
+    networks:
+      - beastate_network
+
+volumes:
+  postgres_data:
+
+
+networks:
+  beastate_network:
+    driver: bridge
