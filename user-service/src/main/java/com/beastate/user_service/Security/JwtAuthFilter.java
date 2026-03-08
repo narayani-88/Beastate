@@ -1,10 +1,8 @@
 package com.beastate.user_service.Security;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.io.IOException;
+
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,7 +10,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import java.io.IOException;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 // OncePerRequestFilter = this filter runs ONCE per every HTTP request
 // It intercepts every request and checks for JWT token
@@ -25,9 +28,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request,   // incoming request
-            HttpServletResponse response, // outgoing response
-            FilterChain filterChain)      // chain of filters
+            @NonNull HttpServletRequest request,   // incoming request
+            @NonNull HttpServletResponse response, // outgoing response
+            @NonNull FilterChain filterChain)      // chain of filters
             throws ServletException, IOException {
 
         // STEP 1: Get the Authorization header

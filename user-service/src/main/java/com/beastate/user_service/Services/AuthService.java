@@ -1,14 +1,16 @@
 package com.beastate.user_service.Services;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.beastate.user_service.DTO.AuthResponse;
 import com.beastate.user_service.DTO.LoginRequest;
 import com.beastate.user_service.DTO.RegisterRequest;
 import com.beastate.user_service.Model.User;
 import com.beastate.user_service.Repository.UserRepository;
 import com.beastate.user_service.Security.JwtUtil;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -32,15 +34,15 @@ public class AuthService {
                 .role(User.Role.BUYER)
                 .build();
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(savedUser.getEmail());
 
         return new AuthResponse(
                 token,
-                user.getEmail(),
-                user.getFullName(),
-                user.getRole().name()
+                savedUser.getEmail(),
+                savedUser.getFullName(),
+                savedUser.getRole().name()
         );
     }
 
