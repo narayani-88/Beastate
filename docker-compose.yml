@@ -15,6 +15,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - beastate_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # 2. Spring Boot Backend Container
   user-service:
@@ -28,9 +33,9 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://userdb:5432/userdb
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
-      # Ensures backend waits for DB to be up (though driver handles reconnections)
     depends_on:
-      - userdb
+      userdb:
+        condition: service_healthy
     networks:
       - beastate_network
 
@@ -41,15 +46,51 @@ services:
       dockerfile: Dockerfile
     container_name: frontend
     ports:
-      - "80:80" # Exposed on standard HTTP port 80
+      - "80:80"
     depends_on:
       - user-service
     networks:
       - beastate_network
 
+  # 4. Python Scraper Container
+  scraper:
+    build:
+      context: ./scraper
+      dockerfile: Dockerfile
+    container_name: beastate_scraper
+    restart: unless-stopped
+    environment:
+      # PostgreSQL
+      - DB_HOST=userdb
+      - DB_PORT=5432
+      - DB_NAME=userdb
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      # Kafka (comment out if not using Kafka locally)
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_TOPIC_MAHARERA=maharera_raw
+      - KAFKA_TOPIC_IBAPI=ibapi_raw
+      - KAFKA_GROUP_ID=scraper_group
+      # Scraper config
+      - RUN_NOW=true          # Run immediately on container start
+      - LOG_LEVEL=INFO
+      - REQUEST_TIMEOUT=30
+      - PAGE_SIZE=100
+      - MAX_PAGES=50
+      # Scheduler (hour of day to run, 24h format)
+      - MAHARERA_CRON_HOUR=2
+      - IBAPI_CRON_HOUR=3
+      # API keys (replace with real values)
+      - IBAPI_API_KEY=your_ibapi_key_here
+      - IBAPI_RESOURCE_ID=your_resource_id_here
+    depends_on:
+      userdb:
+        condition: service_healthy
+    networks:
+      - beastate_network
+
 volumes:
   postgres_data:
-
 
 networks:
   beastate_network:
