@@ -1,9 +1,9 @@
 """
 Scheduler (APScheduler)
 ~~~~~~~~~~~~~~~~~~~~~~~~
-Defines cron triggers for the MahaRERA and IBAPI scrapers, then immediately
-also fires the Kafka consumer/cleaner loops in background threads so that
-scraped data is persisted to PostgreSQL without a separate process.
+Defines cron triggers for the MahaRERA and IBAPI scrapers, then optionally
+fires the Kafka consumer/cleaner loops in background threads if Kafka is
+available.
 """
 import logging
 import threading
@@ -11,28 +11,34 @@ import threading
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from config.settings import MAHARERA_CRON_HOUR, IBAPI_CRON_HOUR
+from config.settings import KAFKA_BROKER, MAHARERA_CRON_HOUR, IBAPI_CRON_HOUR
 from scrapers.maharera_scraper import run_maharera_scraper
 from scrapers.ibapi_scraper import run_ibapi_scraper
-from cleaner.cleaner import run_maharera_consumer, run_ibapi_consumer
 
 logger = logging.getLogger(__name__)
 
 
 def _start_consumers() -> None:
-    """Launch both Kafka consumer loops in daemon threads."""
-    for name, target in [
-        ("maharera-consumer", run_maharera_consumer),
-        ("ibapi-consumer",    run_ibapi_consumer),
-    ]:
-        t = threading.Thread(target=target, name=name, daemon=True)
-        t.start()
-        logger.info("Started background thread: %s", name)
+    """Launch Kafka consumer loops in daemon threads — only if Kafka is configured."""
+    if not KAFKA_BROKER:
+        logger.info("KAFKA_BROKER not set — skipping Kafka consumer threads.")
+        return
+
+    try:
+        from cleaner.cleaner import run_maharera_consumer, run_ibapi_consumer
+        for name, target in [
+            ("maharera-consumer", run_maharera_consumer),
+            ("ibapi-consumer",    run_ibapi_consumer),
+        ]:
+            t = threading.Thread(target=target, name=name, daemon=True)
+            t.start()
+            logger.info("Started background thread: %s", name)
+    except Exception as exc:
+        logger.warning("Could not start Kafka consumers: %s", exc)
 
 
 def run_scheduler() -> None:
     """Configure and start the APScheduler blocking scheduler."""
-    # Start consumer threads first so data is persisted as scrapers run
     _start_consumers()
 
     scheduler = BlockingScheduler(timezone="Asia/Kolkata")
